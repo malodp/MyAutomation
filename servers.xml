@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<PuppetNodes>
+<node>
+   <name>198.89.115.49</name>
+   <type>RHEL</type>
+   <packages>
+	<package>jenkins</package>
+	<package>httpd</package>
+	<package>postgres</package>
+   </packages> 	
+   <user>root</user>
+   <password>PG</password>
+</node>
+
+<node>
+   <name>198.89.115.123</name>
+   <type>CentOS</type>
+   <package>httpd</package>
+   <user>root</user>
+   <password>PG</password>
+</node>
+</PuppetNodes>

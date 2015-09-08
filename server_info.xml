@@ -1,0 +1,22 @@
+<nodes>
+	<node1>
+		<name> 198.89.115.49<name>
+		<os>Ubuntu</os>
+		<packages>
+			<package>jenkins</package>
+			<package>httpd</package>
+			<package>mysqld</package>
+			<package>python</package>
+		</packages>
+	</node1>
+	<node2>
+		<name> 198.89.115.122<name>
+		<os>RHEL</os>
+		<packages>
+			<package>jenkins</package>
+			<package>nginx</package>
+			<package>postgresql-9.4</package>
+			<package>php</package>
+		</packages>
+	</node2>
+</nodes>
