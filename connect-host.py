@@ -74,17 +74,19 @@ def main(argv):
         print('*** Here we go!\n')
         #client.connect(Host, 22, user)
 
-        chan = client.get_transport().open_session()
-        chan.get_pty()
+        #chan = client.get_transport().open_session()
+        #chan.get_pty()
         #stdin, stdout, stderr = client.exec_command('uptime;ls -l;touch puppet_module;ls -l;uptime')  ### Execute command on the client
         stdin, stdout, stderr = client.exec_command('''
             uptime
             touch winner
-            rpm -ivh http://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
-            yum install puppet -y
-            ls -lrt /etc/puppet
-            ''')  ### Execute command on the client
-        #print(chan.recv(4096))
+            date
+			sudo rpm -ivh http://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
+			sudo yum install puppet -y
+			sudo puppet --version
+		    ls -lrt /etc/puppet
+            ''', get_pty=True)  ### Execute command on the client and get_pty=True help us run sudo commands
+        
  
         #for line1 in stderr:
         #    print line1.strip('\n') 
