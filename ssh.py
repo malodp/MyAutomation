@@ -33,6 +33,7 @@ site =''
 username = ''
 localpath = '/etc/puppet/puppet.conf'
 remotepath = '/tmp/puppet.conf'
+key = '/tmp/pravmal.pem'
 debug = 1
 
 
@@ -45,7 +46,7 @@ def connect_hostnexe(hostname, username):
 	client = paramiko.SSHClient()
 	client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	hostname = socket.getfqdn(hostname)
-	client.connect(hostname, username=username, key_filename='/tmp/pravmal.pem')
+	client.connect(hostname, username=username, key_filename=key)
 	stdin, stdout, stderr = client.exec_command(PUPPET_INSTALL, get_pty=True)
 
 	for line in stdout:
@@ -59,7 +60,7 @@ def connect_host_write_file(p_master,p_username,dirname,filename,site):
 	client = paramiko.SSHClient()
 	client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	p_master = socket.getfqdn(p_master)
-	client.connect(p_master, username=p_username, key_filename='/tmp/pravmal.pem')
+	client.connect(p_master, username=p_username, key_filename=key)
 	sftp = client.open_sftp()
 	f = sftp.open(dirname + '/' + filename, 'w')
 	f.write(site)
@@ -71,7 +72,7 @@ def connect_hostncopy(hostname, username,localpath,remotepath):
 	client = paramiko.SSHClient()
 	client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	hostname = socket.getfqdn(hostname)
-	client.connect(hostname, username=username, key_filename='/tmp/pravmal.pem')
+	client.connect(hostname, username=username, key_filename=key)
 	sftp = client.open_sftp()
 	sftp.put(localpath, remotepath)
 	stdin, stdout, stderr = client.exec_command(COPY_FILES, get_pty=True)
