@@ -25,13 +25,13 @@ COPY_FILES = '''''
 			'''''
 
 hostname = ''
-p_master = 'ec2-52-26-186-245.us-west-2.compute.amazonaws.com'
+p_master = 'ip-172-31-27-31.us-west-2.compute.internal'
 p_username = 'ec2-user'
 dirname = ''
 filename = ''
 site =''
 username = ''
-localpath = 'C:/viewwork/prasanna-work/MyAutomation/puppet.conf'
+localpath = '/etc/puppet/puppet.conf'
 remotepath = '/tmp/puppet.conf'
 debug = 1
 
@@ -45,7 +45,7 @@ def connect_hostnexe(hostname, username):
 	client = paramiko.SSHClient()
 	client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	hostname = socket.getfqdn(hostname)
-	client.connect(hostname, username=username, key_filename='C:/viewwork/prasanna-work/pravmal.pem')
+	client.connect(hostname, username=username, key_filename='/tmp/pravmal.pem')
 	stdin, stdout, stderr = client.exec_command(PUPPET_INSTALL, get_pty=True)
 
 	for line in stdout:
@@ -59,7 +59,7 @@ def connect_host_write_file(p_master,p_username,dirname,filename,site):
 	client = paramiko.SSHClient()
 	client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	p_master = socket.getfqdn(p_master)
-	client.connect(p_master, username=p_username, key_filename='C:/viewwork/prasanna-work/pravmal.pem')
+	client.connect(p_master, username=p_username, key_filename='/tmp/pravmal.pem')
 	sftp = client.open_sftp()
 	f = sftp.open(dirname + '/' + filename, 'w')
 	f.write(site)
@@ -71,7 +71,7 @@ def connect_hostncopy(hostname, username,localpath,remotepath):
 	client = paramiko.SSHClient()
 	client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	hostname = socket.getfqdn(hostname)
-	client.connect(hostname, username=username, key_filename='C:/viewwork/prasanna-work/pravmal.pem')
+	client.connect(hostname, username=username, key_filename='/tmp/pravmal.pem')
 	sftp = client.open_sftp()
 	sftp.put(localpath, remotepath)
 	stdin, stdout, stderr = client.exec_command(COPY_FILES, get_pty=True)
@@ -126,15 +126,20 @@ def main(argv):
 	'''''
 	Updating Puppet master's site.pp with puppet agent file
 	'''''
-	dirname = '/etc/puppet/manifests/'
+	dirname = '/etc/puppet/manifests'
 	filename = 'site.pp'
 	site = '''
-node '%s':
+node '%s'
 {
 	include jenkins
 }
 		'''%hostname
-	#connect_host_write_file(p_master, p_username, dirname, filename, site)
+	if debug:
+                print "Dir Name:%s "%dirname
+		print "fileName:%s "%filename
+		print "p_master:%s"%p_master
+		print "Site:%s"%site
+	connect_host_write_file(p_master, p_username, dirname, filename, site)
 
 	'''''
 	Connecting puppet agent server and copy the puppet.conf which has puppet
