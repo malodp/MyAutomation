@@ -19,6 +19,13 @@ PUPPET_INSTALL = '''''
 					ls -lrt /etc/puppet
 					cat /etc/puppet/puppet.conf
 				'''''
+MYSQL_CONFIG = '''''	
+					 mysqladmin -u root create BooksDB
+					 pwd
+					 ls
+     			                 mysql -u root BooksDB < '/tmp/foodmart_data.sql'
+                                '''''
+
 COPY_FILES = '''''
 				sudo cp /tmp/puppet.conf /etc/puppet/puppet.conf
 				sudo puppet agent --test
@@ -26,6 +33,7 @@ COPY_FILES = '''''
 
 hostname = ''
 p_master = 'ip-172-31-27-31.us-west-2.compute.internal'
+#p_master = 'ip-172-31-27-31.us-west-2.compute.internal'
 p_username = 'ec2-user'
 dirname = ''
 filename = ''
@@ -36,6 +44,8 @@ remotepath = '/tmp/puppet.conf'
 key = '/tmp/pravmal.pem'
 debug = 1
 
+sqllocalpath = '/home/ec2-user/foodmart_data.sql'
+sqlremotepath = '/tmp/foodmart_data.sql'
 
 def signal_cleanup(_signum, _frame):
 	print '\nCLEANUP\n'
@@ -48,6 +58,21 @@ def connect_hostnexe(hostname, username):
 	hostname = socket.getfqdn(hostname)
 	client.connect(hostname, username=username, key_filename=key)
 	stdin, stdout, stderr = client.exec_command(PUPPET_INSTALL, get_pty=True)
+
+	for line in stdout:
+		if debug: print line.strip('\n')
+		#if debug: print threading.current_thread().name, line,
+	for line1 in stderr:
+		print line1.strip('\n')
+	client.close()
+
+
+def configure_mysql(hostname, username):
+	client = paramiko.SSHClient()
+	client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+	hostname = socket.getfqdn(hostname)
+	client.connect(hostname, username=username, key_filename=key)
+	stdin, stdout, stderr = client.exec_command(MYSQL_CONFIG, get_pty=True)
 
 	for line in stdout:
 		if debug: print line.strip('\n')
@@ -86,6 +111,22 @@ def connect_hostncopy(hostname, username,localpath,remotepath):
 	client.close()
 
 
+def mysql_config(hostname, username,sqllocalpath,sqlremotepath):
+	client = paramiko.SSHClient()
+	client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+	hostname = socket.getfqdn(hostname)
+	client.connect(hostname, username=username, key_filename=key)
+	sftp = client.open_sftp()
+	sftp.put(sqllocalpath, sqlremotepath)
+	stdin, stdout, stderr = client.exec_command(MYSQL_CONFIG, get_pty=True)
+
+	for line in stdout:
+		if debug: print line.strip('\n')
+		#if debug: print threading.current_thread().name, line,
+	for line1 in stderr:
+		print line1.strip('\n')
+	sftp.close()
+	client.close()
 
 
 
@@ -132,9 +173,10 @@ def main(argv):
 	site = '''
 node '%s'
 {
-	include jenkins
+	include %s
+#	include '::mysql::server'
 }
-		'''%hostname
+		'''%(hostname,pkgs)
 	if debug:
                 print "Dir Name:%s "%dirname
 		print "fileName:%s "%filename
@@ -147,7 +189,8 @@ node '%s'
 	master server
 	'''''
 	connect_hostncopy(hostname, username,localpath,remotepath)
-
+	if pkgs == '::mysql::server' :
+		mysql_config(hostname, username,sqllocalpath,sqlremotepath)
 
 if __name__ == "__main__":
 	main(sys.argv[1:])
