@@ -12,6 +12,8 @@ import paramiko
 import threading
 import signal
 
+private_ip = ''
+MYSQL_CONFIG = ''
 PUPPET_INSTALL = '''''
 					uptime
 					sudo rpm -ivh https://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
@@ -19,13 +21,6 @@ PUPPET_INSTALL = '''''
 					ls -lrt /etc/puppet
 					cat /etc/puppet/puppet.conf
 				'''''
-MYSQL_CONFIG = '''''	
-					 mysqladmin -u root create BooksDB
-					 pwd
-					 ls
-     			                 mysql -u root BooksDB < '/tmp/foodmart_data.sql'
-                                '''''
-
 COPY_FILES = '''''
 				sudo cp /tmp/puppet.conf /etc/puppet/puppet.conf
 				sudo puppet agent --test
@@ -43,6 +38,7 @@ localpath = '/etc/puppet/puppet.conf'
 remotepath = '/tmp/puppet.conf'
 key = '/tmp/pravmal.pem'
 debug = 1
+
 
 sqllocalpath = '/home/ec2-user/foodmart_data.sql'
 sqlremotepath = '/tmp/foodmart_data.sql'
@@ -111,7 +107,7 @@ def connect_hostncopy(hostname, username,localpath,remotepath):
 	client.close()
 
 
-def mysql_config(hostname, username,sqllocalpath,sqlremotepath):
+def mysql_config(hostname, username,sqllocalpath,sqlremotepath,MYSQL_CONFIG):
 	client = paramiko.SSHClient()
 	client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	hostname = socket.getfqdn(hostname)
@@ -132,7 +128,7 @@ def mysql_config(hostname, username,sqllocalpath,sqlremotepath):
 
 def main(argv):
 	try:
-		opts, args = getopt.getopt(argv,"s:e:u:p:k:",["Hserver=","EC2server=","suser","spass","pkgs"])
+		opts, args = getopt.getopt(argv,"s:e:i:u:p:k:",["Hserver=","EC2server=","private_ip","suser","spass","pkgs"])
 	except getopt.GetoptError:
 		print 'USAGE: read_server.py -s <server_ip/name> or -e <ec2_serverIP/Name> -u <Server_user> -p <password> -pkg <package-name>'
 		sys.exit(2)
@@ -150,6 +146,8 @@ def main(argv):
 		elif opt in ("-k","--pkgs"):
 			pkgs = arg
 
+		elif opt in ("-i","--ip"):
+			private_ip = arg
 		elif opt in ("-p","--spass"):
 			password = arg
 
@@ -182,6 +180,7 @@ node '%s'
 		print "fileName:%s "%filename
 		print "p_master:%s"%p_master
 		print "Site:%s"%site
+		print "private_ip:%s"%private_ip
 	connect_host_write_file(p_master, p_username, dirname, filename, site)
 
 	'''''
@@ -189,8 +188,19 @@ node '%s'
 	master server
 	'''''
 	connect_hostncopy(hostname, username,localpath,remotepath)
+	MYSQL_CONFIG = '''''	
+					 mysqladmin -u root create BooksDB
+					 pwd
+					 ls
+     			                 mysql -u root BooksDB < '/tmp/foodmart_data.sql'
+					 sudo sed -i -e 's/\(bind-address = \).*/\1\%s/' /etc/my.cnf.d/server.cnf
+                                '''''%private_ip
+
+	print "MYSQL_CONFIG:%s"%MYSQL_CONFIG
+
 	if pkgs == '::mysql::server' :
-		mysql_config(hostname, username,sqllocalpath,sqlremotepath)
+		print "Executing Mysql changes"
+		mysql_config(hostname, username,sqllocalpath,sqlremotepath,MYSQL_CONFIG)
 
 if __name__ == "__main__":
 	main(sys.argv[1:])
